@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon --config configs/nodemon.config.json src/server.ts"
+    "dev": "nodemon src/server.ts"
   },
   "author": "",
   "license": "ISC",
