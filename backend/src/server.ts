@@ -1,4 +1,4 @@
-import ('dotenv/config');
+import 'dotenv/config';
 
 
-console.log(`Hello ${process.env.NODE_ENV}`);
+console.log(`Hello World ${process.env.HOST}`);
