@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import { Request, Response } from 'express';
+import app from './index';
 
-
-console.log(`Hello World ${process.env.HOST}`);
+app.listen(process.env.PORT, () => {
+    console.log(`Server started on PORT ${process.env.PORT}`);
+});
