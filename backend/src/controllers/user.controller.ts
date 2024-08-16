@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import db from '../db';
 import bcrypt from 'bcrypt';
+import createError from 'http-errors';
 
 export async function login(req: Request, res: Response) {
     res.send('Login user');
@@ -18,7 +19,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
         !username.trim() ||
         !password.trim()
     ) {
-        return next('Username and password are required')
+        return next(createError(400, 'Username and password are required'))
     }
 
     // TODO - Check if username already exists
@@ -29,7 +30,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
     })
 
     // If user exists, return error
-    if (user !== null) return next('User already exists');
+    if (user !== null) return next(createError(409, 'Username already exists'));
 
     // TODO - Hash password
     // Hash password
