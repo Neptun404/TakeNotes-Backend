@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import createError from 'http-errors';
 
 export default function jwtAuth(req: Request, res: Response, next: NextFunction) {
     try {
@@ -14,6 +15,9 @@ export default function jwtAuth(req: Request, res: Response, next: NextFunction)
         next()
     } catch (error) {
         console.error(`[Error] ${error}`);
-        next('Unauthorized')
+        next(createError(401, {
+            message: 'Unauthorized',
+            name: 'AuthenticationFailed',
+        }))
     }
 }
