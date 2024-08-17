@@ -28,11 +28,30 @@ export async function getNote(req: Request, res: Response, next: NextFunction) {
     // Send response with success message and resource
     res.json({
         message: 'Note found',
-        data : note
+        data: note
     })
 }
 
-export async function getNotes(req: Request, res: Response, next: NextFunction) { }
+export async function getNotes(req: Request, res: Response, next: NextFunction) {
+    const { userId } = res.locals as { userId: number };
+
+    try {
+        // Find all notes in database with user id as owner
+        const notes = await db.note.findMany({
+            where: {
+                ownerId: userId
+            }
+        })
+
+        // Send response with success message and resource
+        res.json({
+            message: 'Notes found',
+            data: notes
+        })
+    } catch (error) {
+        return next(createError(500, 'Internal server error'))
+    }
+}
 
 export async function createNote(req: Request, res: Response, next: NextFunction) {
     const { userId } = res.locals as { userId: number };
