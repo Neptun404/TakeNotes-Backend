@@ -2,7 +2,35 @@ import { Request, Response, NextFunction } from "express";
 import createError from 'http-errors';
 import db from '../db';
 
-export async function getNote(req: Request, res: Response, next: NextFunction) { }
+export async function getNote(req: Request, res: Response, next: NextFunction) {
+    const { userId } = res.locals as { userId: number };
+    const { id: noteId } = req.params;
+
+    // Check if id is valid note id
+    if (!Number.isInteger(parseInt(noteId))) {
+        return next(createError(400, 'Invalid note id'))
+    }
+
+    // Find note by id in database with user id as owner
+    const note = await db.note.findFirst({
+        where: {
+            id: parseInt(noteId), AND: {
+                ownerId: userId
+            }
+        }
+    })
+
+    // If note is not found, return error
+    if (!note) {
+        return next(createError(404, 'Note not found'))
+    }
+
+    // Send response with success message and resource
+    res.json({
+        message: 'Note found',
+        data : note
+    })
+}
 
 export async function getNotes(req: Request, res: Response, next: NextFunction) { }
 
