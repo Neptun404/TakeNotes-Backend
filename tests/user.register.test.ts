@@ -49,12 +49,12 @@ test('[R003] Test user registration should fail if username already exists', asy
 
 test('[R004] Test user registration should succeed', async () => {
     // Delete user if it already exists
-    await db.user.delete({
+    db.user.delete({
         where: {
             username: 'testuser1999'
         }
-    })
-    
+    }).catch()
+
     const response = await fetch(`http://${process.env.HOST}:${process.env.PORT}/user/register`, {
         method: 'POST',
         headers: {
