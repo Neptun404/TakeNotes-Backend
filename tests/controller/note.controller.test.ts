@@ -2,7 +2,7 @@ import { Note } from '@prisma/client';
 import noteController from '../../src/controllers/note.controller';
 import { getManyNotes, getOneNote, NoteNotFoundError } from '../../src/services/note.service';
 import { Request, Response, NextFunction } from 'express';
-import * as createError from 'http-errors';
+import { createError } from '../../src/utils/createError';
 
 jest.mock('../../src/services/note.service')
 
@@ -19,7 +19,6 @@ describe('Test getting notes from the api', () => {
 
     beforeEach(() => {
         jest.clearAllMocks()
-        mockGetOneNote.mockClear()
 
         req = {
             params: { id: '1' } // Ensure params are strings, as they are in real HTTP requests
@@ -78,7 +77,6 @@ describe('Test cases for getting multiple notes controller', () => {
 
     beforeEach(() => {
         jest.clearAllMocks()
-        mockGetOneNote.mockClear()
 
         req = {
         };
