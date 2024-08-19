@@ -52,6 +52,21 @@ export async function getOneNote(ownerId: number, noteId: number) {
     }
 }
 
+export async function getManyNotes(ownerId: number) {
+    try {
+        const notes = await db.note.findMany({
+            where: {
+                ownerId: ownerId
+            }
+        })
+
+        return notes;
+    } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
+        else throw new Error('Internal server error');
+    }
+}
+
 export async function createNote(ownerId: number, note: { title: string, content: string }) {
     try {
         // Create note in database with user id as owner
