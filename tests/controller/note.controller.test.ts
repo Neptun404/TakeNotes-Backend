@@ -1,12 +1,13 @@
 import { Note } from '@prisma/client';
 import noteController from '../../src/controllers/note.controller';
-import { getOneNote, NoteNotFoundError } from '../../src/services/note.service';
+import { getManyNotes, getOneNote, NoteNotFoundError } from '../../src/services/note.service';
 import { Request, Response, NextFunction } from 'express';
 import * as createError from 'http-errors';
 
 jest.mock('../../src/services/note.service')
 
 const mockGetOneNote = getOneNote as jest.Mock;
+const mockGetManyNotes = getManyNotes as jest.Mock;
 
 describe('Test getting notes from the api', () => {
     const mockData: Note = { content: 'Note Content', title: 'Note Title', id: 1, ownerId: 1 }
@@ -65,5 +66,42 @@ describe('Test getting notes from the api', () => {
         await noteController.getNote(req as Request, res as Response, next);
 
         expect(next).toHaveBeenCalledWith(createError(404, 'Note not found'))
+    })
+})
+
+describe('Test cases for getting multiple notes controller', () => {
+    let req: Partial<Request>
+    let res: Partial<Response>
+    let next: NextFunction;
+
+    const mockDatas: Note[] = [{ content: 'Note Content', title: 'Note Title', id: 1, ownerId: 1 }, { content: 'Note Content', title: 'Note Title', id: 2, ownerId: 1 }]
+
+    beforeEach(() => {
+        jest.clearAllMocks()
+        mockGetOneNote.mockClear()
+
+        req = {
+        };
+
+        res = {
+            locals: { userId: 1 },
+            status: jest.fn().mockReturnThis(), // Allows method chaining
+            json: jest.fn(),
+            send: jest.fn()
+        };
+
+        next = jest.fn();
+    })
+
+    it('Get multiple notes should succeed', async () => {
+        mockGetManyNotes.mockResolvedValue(mockDatas)
+        await noteController.getNotes(req as Request, res as Response, next)
+        expect(res.json).toHaveBeenCalledWith({ status: 'success', message: 'Notes found', data: mockDatas })
+    })
+
+    it('Get notes should succeed even if the owner has no notes created', async () => {
+        mockGetManyNotes.mockResolvedValue([])
+        await noteController.getNotes(req as Request, res as Response, next)
+        expect(res.json).toHaveBeenCalledWith({ status: 'success', message: 'Notes found', data: [] })
     })
 })
