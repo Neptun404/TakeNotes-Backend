@@ -14,6 +14,8 @@ export default router
     .delete('/:id', controllers.deleteNote)
     .use(function (err: HttpError, req: Request, res: Response, next: NextFunction) {
         res.status(err.statusCode).json({
-            message: err.message
+            status: 'failed',
+            message: err.message,
+            error: err.name
         })
     });
