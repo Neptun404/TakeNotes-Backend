@@ -51,7 +51,7 @@ test('[R004] Test user registration should succeed', async () => {
     // Delete user if it already exists
     await db.user.delete({
         where: {
-            username: 'neptun'
+            username: 'testuser1999'
         }
     })
     
@@ -61,8 +61,8 @@ test('[R004] Test user registration should succeed', async () => {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            username: 'neptun',
-            password: 'neptun@123'
+            username: 'testuser1999',
+            password: 'testuser1999@123'
         })
     })
 
