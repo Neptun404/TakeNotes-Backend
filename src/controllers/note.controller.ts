@@ -32,12 +32,6 @@ export async function getNote(req: Request, res: Response, next: NextFunction) {
             data: note
         })
     } catch (error) {
-        console.error("Error occured ", error.message);
-        console.table({
-            1: error instanceof InvalidNoteID,
-            2: error instanceof NoteNotFoundError,
-            3: error instanceof DatabaseError
-        });
         if (error instanceof InvalidNoteID) return next(createError(400, 'Invalid note id'))
         else if (error instanceof NoteNotFoundError) return next(createError(404, 'Note not found'))
         else if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
