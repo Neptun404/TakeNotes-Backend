@@ -47,8 +47,10 @@ export async function getNote(req: Request, res: Response, next: NextFunction) {
 
 export async function getNotes(req: Request, res: Response, next: NextFunction) {
     const { userId } = res.locals as { userId: number };
+    const { id } = req.params;
 
     try {
+        
         // Find all notes in database with user id as owner
         const notes = await db.note.findMany({
             where: {
