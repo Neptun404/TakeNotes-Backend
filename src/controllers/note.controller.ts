@@ -1,10 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import * as createError from 'http-errors';
 import db from '../db';
 import noteServices, { DatabaseError, NoteNotFoundError, getManyNotes, getOneNote } from '../services/note.service';
-
-
-
+import { createError } from '../utils/createError';
 
 class InvalidNoteID {
     message: string
@@ -162,7 +159,7 @@ export async function getNotes(req: Request, res: Response, next: NextFunction) 
 export default {
     getNote,
     getNotes,
-    createNote: () => { throw Error('Not Implemented') },
-    updateNote: () => { throw Error('Not Implemented') },
-    deleteNote: () => { throw Error('Not Implemented') }
+    createNote: (req: Request, res: Response, next: NextFunction) => { next(createError(501, "Not Implemented")) },
+    updateNote: (req: Request, res: Response, next: NextFunction) => { next(createError(501, "Not Implemented")) },
+    deleteNote: (req: Request, res: Response, next: NextFunction) => { next(createError(501, "Not Implemented")) }
 }
