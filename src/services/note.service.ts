@@ -7,12 +7,16 @@ import {
 } from '@prisma/client/runtime/library';
 import db from '../db';
 
-type PrismaClientError = PrismaClientInitializationError | PrismaClientRustPanicError | PrismaClientValidationError | PrismaClientKnownRequestError | PrismaClientUnknownRequestError
+type PrismaClientError = PrismaClientInitializationError | PrismaClientRustPanicError | PrismaClientValidationError | PrismaClientKnownRequestError | PrismaClientUnknownRequestError | Error
 
 export class NoteNotFoundError extends Error {
+    name: string
+    message: string
+
     constructor(message: string) {
-        super(message);
+        super(message)
         this.name = 'NoteNotFoundError';
+        this.message = message
     }
 }
 
@@ -28,9 +32,8 @@ export class DatabaseError {
     }
 }
 
-export async function updateNote(ownerId: number, noteId: number, noteData: { title: string, content: string }) {
+export async function getNote(ownerId: number, noteId: number) {
     try {
-        // Find note by id in database with user id as owner
         const note = await db.note.findFirst({
             where: {
                 id: noteId, AND: {
@@ -39,30 +42,76 @@ export async function updateNote(ownerId: number, noteId: number, noteData: { ti
             }
         })
 
-        // If note is not found, throw error
         if (!note) throw new NoteNotFoundError(`Note with id ${noteId} that belongs to Owner with id ${ownerId} not found`);
 
-        // Update note in database 
-        const updatedNote = await db.note.update({
+        return note;
+    } catch (error) {
+        if (error instanceof NoteNotFoundError) throw error;
+        else if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
+        else throw new Error('Internal server error');
+    }
+}
+
+export async function createNote(ownerId: number, note: { title: string, content: string }) {
+    try {
+        // Create note in database with user id as owner
+        const createdNote = await db.note.create({
             data: {
-                title: noteData.title,
-                content: noteData.content,
-            },
-            where: {
-                id: noteId,
+                title: note.title,
+                content: note.content,
                 ownerId
             }
         })
 
-        return updatedNote; // Return the update note
+        return createdNote; // Return the created note
     } catch (error) {
-        if (error instanceof NoteNotFoundError)
-            throw error;
+        if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
+        else throw new Error('Internal server error');
+    }
+}
 
-        throw new DatabaseError(error.message, error);
+export async function deleteNote(ownerId: number, noteId: number) {
+    try {
+        const deletedNote = await db.note.delete({
+            where: {
+                id: noteId, AND: {
+                    ownerId: ownerId
+                }
+            }
+        })
+
+        return deletedNote;
+    } catch (error: any) {
+        if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
+        else throw new Error('Internal server error');
+    }
+}
+
+export async function updateNote(ownerId: number, noteId: number, note: { title: string, content: string }) {
+    try {
+        // Update user's record in the database
+        const updatedNote = await db.note.update({
+            where: {
+                id: noteId, AND: {
+                    ownerId
+                }
+            },
+            data: {
+                ...note
+            }
+        })
+
+        return updatedNote;
+    } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError)
+            if (error.code === 'P2025') // P2025 means record not found
+                throw new NoteNotFoundError(`Note with id ${noteId} that belongs to Owner with id ${ownerId} not found`)
+            else throw new DatabaseError('Database error occured during note update', error)
+        else throw new Error('Internal server error')
     }
 }
 
 export default {
-    updateNote
+    updateNote: (...params: any[]) => { },
+    deleteNote
 }
