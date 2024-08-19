@@ -4,7 +4,8 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon src/server.ts",
-    "test": "jest"
+    "test": "jest",
+    "test--services" : "npx jest .*service.test.ts"
   },
   "author": "",
   "license": "ISC",
