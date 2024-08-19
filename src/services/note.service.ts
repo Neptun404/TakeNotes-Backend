@@ -32,7 +32,7 @@ export class DatabaseError {
     }
 }
 
-export async function getNote(ownerId: number, noteId: number) {
+export async function getOneNote(ownerId: number, noteId: number) {
     try {
         const note = await db.note.findFirst({
             where: {
