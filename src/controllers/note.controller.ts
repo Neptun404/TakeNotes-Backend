@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as createError from 'http-errors';
 import db from '../db';
-import noteServices, { DatabaseError, NoteNotFoundError, getOneNote } from '../services/note.service';
+import noteServices, { DatabaseError, NoteNotFoundError, getManyNotes, getOneNote } from '../services/note.service';
 
 
 
@@ -47,24 +47,17 @@ export async function getNote(req: Request, res: Response, next: NextFunction) {
 
 export async function getNotes(req: Request, res: Response, next: NextFunction) {
     const { userId } = res.locals as { userId: number };
-    const { id } = req.params;
-
     try {
-        
-        // Find all notes in database with user id as owner
-        const notes = await db.note.findMany({
-            where: {
-                ownerId: userId
-            }
-        })
+        const notes = await getManyNotes(userId);
 
-        // Send response with success message and resource
         res.json({
+            status: 'success',
             message: 'Notes found',
             data: notes
         })
     } catch (error) {
-        return next(createError(500, 'Internal server error'))
+        if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
+        else return next(createError(500, 'Internal server error'))
     }
 }
 
