@@ -1,4 +1,4 @@
-import { createNote, DatabaseError, getManyNotes, getOneNote, NoteNotFoundError, updateNote } from '../../src/services/note.service';
+import noteService, { createNote, DatabaseError, getManyNotes, getOneNote, NoteNotFoundError, updateNote } from '../../src/services/note.service';
 import db from '../../src/db';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
@@ -9,7 +9,8 @@ jest.mock('../../src/db', () => ({
             create: jest.fn(),
             findFirst: jest.fn(),
             update: jest.fn(),
-            findMany: jest.fn()
+            findMany: jest.fn(),
+            delete: jest.fn(),
         }
     }
 }))
@@ -19,6 +20,7 @@ const mockNoteCreation = db.note.create as jest.Mock;
 const mockNoteFindFirst = db.note.findFirst as jest.Mock;
 const mockNoteFindMany = db.note.findMany as jest.Mock;
 const mockNoteUpdate = db.note.update as jest.Mock;
+const mockNoteDelete = db.note.delete as jest.Mock;
 
 describe('Test cases for creating notes', () => {
     beforeEach(() => {
@@ -175,5 +177,52 @@ describe("Test cases for note updates", () => {
     it("Update exisintg note but does not belong to the owner should throw an error", async () => {
         mockNoteUpdate.mockRejectedValue(noteNotFoundError)
         expect(updateNote(2, oldNote.id, oldNote)).rejects.toBeInstanceOf(NoteNotFoundError)
+    })
+})
+
+describe('Test cases for note deletion', () => {
+    it('Note deletion should succeed', async () => {
+        const noteId = 1,
+            ownerId = 1;
+
+        const expectedData = {
+            id: noteId,
+            ownerId,
+            title: 'Note Title',
+            content: 'Note Content'
+        }
+        mockNoteDelete.mockResolvedValue(expectedData)
+
+        const result = await noteService.deleteNote(ownerId, noteId)
+
+        expect(result).toBe(expectedData)
+    })
+
+    it('Note deletion should fail if note does not belong to the user', async () => {
+        const noteId = 1,
+            ownerId = 2;
+
+        mockNoteDelete.mockRejectedValue(new PrismaClientKnownRequestError('', {
+            clientVersion: '',
+            code: 'P2025'
+        }))
+
+        const d = () => noteService.deleteNote(ownerId, noteId);
+
+        expect(d).rejects.toBeInstanceOf(NoteNotFoundError)
+    })
+
+    it('Note deletion should fail if note does not exist', async () => {
+        const noteId = 1,
+            ownerId = 1;
+
+        mockNoteDelete.mockRejectedValue(new PrismaClientKnownRequestError('', {
+            clientVersion: '',
+            code: 'P2025'
+        }))
+
+        const d = () => noteService.deleteNote(ownerId, noteId);
+
+        expect(d).rejects.toBeInstanceOf(NoteNotFoundError)
     })
 })
