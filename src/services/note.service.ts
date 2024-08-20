@@ -97,7 +97,11 @@ export async function deleteNote(ownerId: number, noteId: number) {
 
         return deletedNote;
     } catch (error: any) {
-        if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
+        if (error instanceof PrismaClientKnownRequestError) {
+            if (error.code === 'P2025') // P2025 means record not found
+                throw new NoteNotFoundError(`Note with id ${noteId} that belongs to Owner with id ${ownerId} not found`)
+            throw new DatabaseError(error.message, error)
+        }
         else throw new Error('Internal server error');
     }
 }
