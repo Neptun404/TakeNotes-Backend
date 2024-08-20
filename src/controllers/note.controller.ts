@@ -52,6 +52,37 @@ export async function getNotes(req: Request, res: Response, next: NextFunction) 
     }
 }
 
+class MissingTitleOrContentError extends Error {
+    message: string
+    constructor(message: string) {
+        super(message);
+        this.message = message;
+    }
+}
+
+export async function createNote(req: Request, res: Response, next: NextFunction) {
+    const { userId } = res.locals as { userId: number };
+    const { title, content } = req.body
+
+    try {
+        // Throw error if title is missing or empty
+        if (!title || !content) throw new MissingTitleOrContentError('Title and content are required')
+        else if ((title as string).trim() === '') throw new MissingTitleOrContentError('Title cannot be empty')
+
+        const note = await noteServices.createNote(userId, { title, content })
+
+        res.status(201).json({
+            status: 'success',
+            message: 'Note created',
+            data: note
+        })
+    } catch (error) {
+        if (error instanceof MissingTitleOrContentError) return next(createError(400, error.message))
+        else if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
+        else return next(createError(500, 'Internal server error'))
+    }
+}
+
 // export async function createNote(req: Request, res: Response, next: NextFunction) {
 //     const { userId } = res.locals as { userId: number };
 
@@ -159,7 +190,7 @@ export async function getNotes(req: Request, res: Response, next: NextFunction) 
 export default {
     getNote,
     getNotes,
-    createNote: (req: Request, res: Response, next: NextFunction) => { next(createError(501, "Not Implemented")) },
+    createNote,
     updateNote: (req: Request, res: Response, next: NextFunction) => { next(createError(501, "Not Implemented")) },
     deleteNote: (req: Request, res: Response, next: NextFunction) => { next(createError(501, "Not Implemented")) }
 }
