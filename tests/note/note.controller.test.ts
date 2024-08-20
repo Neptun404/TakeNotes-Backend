@@ -1,6 +1,6 @@
 import { Note } from '@prisma/client';
 import noteController from '../../src/controllers/note.controller';
-import { createNote, getManyNotes, getOneNote, NoteNotFoundError } from '../../src/services/note.service';
+import { createNote, deleteNote, getManyNotes, getOneNote, NoteNotFoundError } from '../../src/services/note.service';
 import { Request, Response, NextFunction } from 'express';
 import { createError } from '../../src/utils/createError';
 
@@ -9,6 +9,7 @@ jest.mock('../../src/services/note.service')
 const mockGetOneNote = getOneNote as jest.Mock;
 const mockGetManyNotes = getManyNotes as jest.Mock;
 const mockCreateNote = createNote as jest.Mock;
+const mockDeleteNote = deleteNote as jest.Mock;
 
 describe('Test getting notes from the api', () => {
     const mockData: Note = { content: 'Note Content', title: 'Note Title', id: 1, ownerId: 1 }
@@ -159,5 +160,79 @@ describe('Test cases for note creation', () => {
         await noteController.createNote(req as Request, res as Response, next);
 
         expect(next).toHaveBeenCalledWith(createError(400, 'Title cannot be empty'))
+    })
+})
+
+describe('Test cases for note deletion', () => {
+    let req: Partial<Request>
+    let res: Partial<Response>
+    let next: NextFunction;
+
+    beforeEach(() => {
+        jest.clearAllMocks()
+
+        req = {
+            params: { id: '1' } // Ensure params are strings, as they are in real HTTP requests
+        };
+
+        res = {
+            json: jest.fn(),
+            status: jest.fn().mockReturnThis(), // Allows method chaining
+            locals: { userId: 1 },
+        };
+
+        next = jest.fn();
+    })
+
+    it('Test note deletion should succeed', async () => {
+        req.params = { id: '1' }
+        mockDeleteNote.mockResolvedValue({
+            id: 1,
+            ownerId: res.locals!.userId,
+            title: 'Note Title',
+            content: 'Note Content'
+        })
+
+        await noteController.deleteNote(req as Request, res as Response, next)
+
+        expect(next).toHaveBeenCalledTimes(0)
+        expect(res.json).toHaveBeenCalledWith({
+            status: 'success',
+            message: 'Note deleted'
+        })
+    })
+
+    it('Test error 400 should be thrown if note id is missing', async () => {
+        req.params = {}
+
+        await noteController.deleteNote(req as Request, res as Response, next)
+
+        expect(next).toHaveBeenCalledWith(createError(400, `${req.params!.id} is an invalid note id`))
+    })
+
+    it('Test error 400 should be thrown if note id is invalid', async () => {
+        req.params!.id = 'abc';
+
+        await noteController.deleteNote(req as Request, res as Response, next)
+
+        expect(next).toHaveBeenCalledWith(createError(400, `${req.params!.id} is an invalid note id`))
+    })
+
+    it('Test error 404 should be sent if note does not exist', async () => {
+        mockDeleteNote.mockRejectedValue(new NoteNotFoundError('Note not found'))
+
+        await noteController.deleteNote(req as Request, res as Response, next)
+
+        expect(next).toHaveBeenCalledWith(createError(404, 'Note not found'))
+    })
+
+    it('Test error 404 should be sent if note exists but is not owned by the user', async () => {
+        res.locals!.userId = 2 // Ensure that the user is not the owner of the note
+        mockDeleteNote.mockRejectedValue(new NoteNotFoundError('Note not found'))
+
+        await noteController.deleteNote(req as Request, res as Response, next)
+
+        expect(res.json).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledWith(createError(404, 'Note not found'))
     })
 })
