@@ -127,6 +127,9 @@ export async function updateNote(ownerId: number, noteId: number, note: { title:
 }
 
 export default {
-    updateNote: (...params: any[]) => { },
-    deleteNote
+    getOneNote,
+    getManyNotes,
+    createNote,
+    deleteNote,
+    updateNote
 }
