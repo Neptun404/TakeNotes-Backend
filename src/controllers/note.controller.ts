@@ -83,6 +83,29 @@ export async function createNote(req: Request, res: Response, next: NextFunction
     }
 }
 
+export async function deleteNote(req: Request, res: Response, next: NextFunction) {
+    const { userId } = res.locals as { userId: number };
+    const { id } = req.params;
+
+    // Check if id is valid note id
+    try {
+        const noteId = validateNoteID(id)
+
+        // Delete note in database
+        await noteServices.deleteNote(noteId, userId)
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Note deleted',
+        })
+    } catch (error) {
+        if (error instanceof InvalidNoteID) return next(createError(400, `${id} is an invalid note id`))
+        else if (error instanceof NoteNotFoundError) return next(createError(404, 'Note not found'))
+        else if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
+        else return next(createError(500, 'Internal server error'))
+    }
+}
+
 // export async function createNote(req: Request, res: Response, next: NextFunction) {
 //     const { userId } = res.locals as { userId: number };
 
@@ -192,5 +215,5 @@ export default {
     getNotes,
     createNote,
     updateNote: (req: Request, res: Response, next: NextFunction) => { next(createError(501, "Not Implemented")) },
-    deleteNote: (req: Request, res: Response, next: NextFunction) => { next(createError(501, "Not Implemented")) }
+    deleteNote
 }
