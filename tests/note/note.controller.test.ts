@@ -1,6 +1,6 @@
 import { Note } from '@prisma/client';
 import noteController from '../../src/controllers/note.controller';
-import { getManyNotes, getOneNote, NoteNotFoundError } from '../../src/services/note.service';
+import { createNote, getManyNotes, getOneNote, NoteNotFoundError } from '../../src/services/note.service';
 import { Request, Response, NextFunction } from 'express';
 import { createError } from '../../src/utils/createError';
 
@@ -8,6 +8,7 @@ jest.mock('../../src/services/note.service')
 
 const mockGetOneNote = getOneNote as jest.Mock;
 const mockGetManyNotes = getManyNotes as jest.Mock;
+const mockCreateNote = createNote as jest.Mock;
 
 describe('Test getting notes from the api', () => {
     const mockData: Note = { content: 'Note Content', title: 'Note Title', id: 1, ownerId: 1 }
@@ -101,5 +102,62 @@ describe('Test cases for getting multiple notes controller', () => {
         mockGetManyNotes.mockResolvedValue([])
         await noteController.getNotes(req as Request, res as Response, next)
         expect(res.json).toHaveBeenCalledWith({ status: 'success', message: 'Notes found', data: [] })
+    })
+})
+
+describe('Test cases for note creation', () => {
+    let req: Partial<Request>
+    let res: Partial<Response>
+    let next: NextFunction;
+
+    beforeEach(() => {
+        jest.clearAllMocks()
+
+        req = {
+        };
+
+        res = {
+            locals: { userId: 1 },
+            status: jest.fn().mockReturnThis(), // Allows method chaining
+            json: jest.fn(),
+            send: jest.fn()
+        };
+
+        next = jest.fn();
+    })
+
+    it('Note creation should be successful', async () => {
+        const mockData = { ownerId: 1, title: 'Test Note Title', content: 'Test Note Content' }
+
+        mockCreateNote.mockResolvedValue(mockData)
+        req.body = { title: 'Test Note Title', content: 'Test Note Content' }
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(res.json).toHaveBeenCalledWith({
+            status: 'success',
+            message: 'Note created',
+            data: mockData
+        })
+    })
+
+    it('Test error 400 should be thrown if title is missing', async () => {
+        req.body = { content: 'Test Note Content' }
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(next).toHaveBeenCalledWith(createError(400, 'Title and content are required'))
+    })
+
+    it('Test error 400 should be thrown if content is missing', async () => {
+        req.body = { title: 'Test Note Title' }
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(next).toHaveBeenCalledWith(createError(400, 'Title and content are required'))
+    })
+
+    it('Test error 400 should be thrown if title is an empty string', async () => {
+        req.body = { title: '  ', content: 'Test Note Content' }
+        await noteController.createNote(req as Request, res as Response, next);
+
+        expect(next).toHaveBeenCalledWith(createError(400, 'Title cannot be empty'))
     })
 })
