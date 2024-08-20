@@ -106,6 +106,35 @@ export async function deleteNote(req: Request, res: Response, next: NextFunction
     }
 }
 
+export async function updateNote(req: Request, res: Response, next: NextFunction) {
+    const { userId } = res.locals as { userId: number };
+    const { id } = req.params;
+    const { title, content } = req.body
+
+    try {
+        const noteId = validateNoteID(id)
+
+        // Check if title and content are not empty
+        if (!title || !content) throw new MissingTitleOrContentError('Title and content are required')
+        else if ((title as string).trim() === '') throw new MissingTitleOrContentError('Title cannot be empty')
+
+        const updatedNote = await noteServices.updateNote(noteId, userId, { title, content })
+
+        // Send response with success message and resource
+        res.status(200).json({
+            "status": "success",
+            "message": "Note updated",
+            "data": updatedNote
+        })
+    } catch (error) {
+        if (error instanceof MissingTitleOrContentError) return next(createError(400, error.message))
+        else if (error instanceof InvalidNoteID) return next(createError(400, `${id} is an invalid note id`))
+        else if (error instanceof NoteNotFoundError) return next(createError(404, 'Note not found'))
+        else if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
+        else return next(createError(500, 'Internal server error'))
+    }
+}
+
 // export async function createNote(req: Request, res: Response, next: NextFunction) {
 //     const { userId } = res.locals as { userId: number };
 
@@ -214,6 +243,6 @@ export default {
     getNote,
     getNotes,
     createNote,
-    updateNote: (req: Request, res: Response, next: NextFunction) => { next(createError(501, "Not Implemented")) },
+    updateNote,
     deleteNote
 }
