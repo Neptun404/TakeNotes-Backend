@@ -1,8 +1,9 @@
 import { Note } from '@prisma/client';
 import noteController from '../../src/controllers/note.controller';
-import { createNote, deleteNote, getManyNotes, getOneNote, NoteNotFoundError } from '../../src/services/note.service';
+import { createNote, deleteNote, getManyNotes, getOneNote, NoteNotFoundError, updateNote } from '../../src/services/note.service';
 import { Request, Response, NextFunction } from 'express';
 import { createError } from '../../src/utils/createError';
+import { getMockReq, getMockRes } from '@jest-mock/express'
 
 jest.mock('../../src/services/note.service')
 
@@ -10,6 +11,7 @@ const mockGetOneNote = getOneNote as jest.Mock;
 const mockGetManyNotes = getManyNotes as jest.Mock;
 const mockCreateNote = createNote as jest.Mock;
 const mockDeleteNote = deleteNote as jest.Mock;
+const mockUpdateNote = updateNote as jest.Mock;
 
 describe('Test getting notes from the api', () => {
     const mockData: Note = { content: 'Note Content', title: 'Note Title', id: 1, ownerId: 1 }
@@ -231,6 +233,68 @@ describe('Test cases for note deletion', () => {
         mockDeleteNote.mockRejectedValue(new NoteNotFoundError('Note not found'))
 
         await noteController.deleteNote(req as Request, res as Response, next)
+
+        expect(res.json).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledWith(createError(404, 'Note not found'))
+    })
+})
+
+describe('Check function \'updateNote controller\'', () => {
+    beforeEach(() => {
+        jest.clearAllMocks()
+    })
+
+    it('should return 200 when note is updated', async () => {
+        const mockData: Note = { content: 'New Content', title: 'New Title', id: 1, ownerId: 1 }
+        const req = getMockReq({ params: { id: '1' }, body: { title: 'Old Title', content: 'Old Content' } })
+        const { res, next } = getMockRes({ locals: { userId: 1 } })
+
+        mockUpdateNote.mockResolvedValue(mockData)
+        await noteController.updateNote(req, res, next)
+
+        expect(next).not.toHaveBeenCalled()
+        expect(res.json).toHaveBeenCalledWith({
+            status: 'success',
+            message: 'Note updated',
+            data: mockData
+        })
+    })
+
+    it('should return 400 when title or content is not sent', async () => {
+        const req = getMockReq({ params: { id: '1' }, body: {} })
+        const { res, next } = getMockRes({ locals: { userId: 1 } })
+
+        await noteController.updateNote(req, res, next)
+
+        expect(res.json).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledWith(createError(400, 'Title and content are required'))
+    })
+
+    it('should return 400 when title is empty', async () => {
+        const req = getMockReq({ params: { id: '1' }, body: { title: '  ', content: 'Old Content' } })
+        const { res, next } = getMockRes({ locals: { userId: 1 } })
+
+        await noteController.updateNote(req, res, next)
+
+        expect(res.json).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledWith(createError(400, 'Title cannot be empty'))
+    })
+
+    it('should return 404 when note is not found', async () => {
+        const req = getMockReq({ params: { id: '1' }, body: { title: 'Old Title', content: 'Old Content' } })
+        const { res, next } = getMockRes({ locals: { userId: 1 } })
+
+        await noteController.updateNote(req, res, next)
+
+        expect(res.json).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledWith(createError(404, 'Note not found'))
+    })
+
+    it('should return 404 when note exists but is not owned by the user', async () => {
+        const req = getMockReq({ params: { id: '1' }, body: { title: 'Old Title', content: 'Old Content' } })
+        const { res, next } = getMockRes({ locals: { userId: 2 } })
+
+        await noteController.updateNote(req, res, next)
 
         expect(res.json).not.toHaveBeenCalled()
         expect(next).toHaveBeenCalledWith(createError(404, 'Note not found'))
