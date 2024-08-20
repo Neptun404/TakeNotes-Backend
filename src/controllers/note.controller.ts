@@ -118,7 +118,7 @@ export async function updateNote(req: Request, res: Response, next: NextFunction
         if (!title || !content) throw new MissingTitleOrContentError('Title and content are required')
         else if ((title as string).trim() === '') throw new MissingTitleOrContentError('Title cannot be empty')
 
-        const updatedNote = await noteServices.updateNote(noteId, userId, { title, content })
+        const updatedNote = await noteServices.updateNote(userId, noteId, { title, content })
 
         // Send response with success message and resource
         res.status(200).json({
