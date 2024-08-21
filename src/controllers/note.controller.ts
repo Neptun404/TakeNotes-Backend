@@ -92,7 +92,7 @@ export async function deleteNote(req: Request, res: Response, next: NextFunction
         const noteId = validateNoteID(id)
 
         // Delete note in database
-        await noteServices.deleteNote(noteId, userId)
+        await noteServices.deleteNote(userId, noteId)
 
         res.status(200).json({
             status: 'success',
