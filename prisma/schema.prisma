@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
@@ -9,17 +9,17 @@ datasource db {
 }
 
 model User {
-  id Int @id @default(autoincrement())
+  id       Int    @id @default(autoincrement())
   username String @unique
   password String
-  notes Note[]
+  notes    Note[]
 }
 
 model Note {
-  id Int @id @default(autoincrement())
-  title String
+  id      Int    @id @default(autoincrement())
+  title   String
   content String @db.LongText
-  owner User @relation(fields: [ownerId], references: [id])
+  owner   User   @relation(fields: [ownerId], references: [id])
   ownerId Int
 
   @@fulltext([title])
