@@ -284,6 +284,7 @@ describe('Check function \'updateNote controller\'', () => {
         const req = getMockReq({ params: { id: '1' }, body: { title: 'Old Title', content: 'Old Content' } })
         const { res, next } = getMockRes({ locals: { userId: 1 } })
 
+        mockUpdateNote.mockRejectedValue(new NoteNotFoundError('Note not found'))
         await noteController.updateNote(req, res, next)
 
         expect(res.json).not.toHaveBeenCalled()
@@ -293,6 +294,8 @@ describe('Check function \'updateNote controller\'', () => {
     it('should return 404 when note exists but is not owned by the user', async () => {
         const req = getMockReq({ params: { id: '1' }, body: { title: 'Old Title', content: 'Old Content' } })
         const { res, next } = getMockRes({ locals: { userId: 2 } })
+
+        mockUpdateNote.mockRejectedValue(new NoteNotFoundError('Note not found'))
 
         await noteController.updateNote(req, res, next)
 
