@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import db from '../db';
-import noteServices, { DatabaseError, NoteNotFoundError, getManyNotes, getOneNote } from '../services/note.service';
+import noteServices, { getManyNotes, getOneNote } from '../services/note.service';
 import { createError } from '../utils/createError';
+import { DatabaseError, NoteNotFoundError } from '../errors/DatabaseErrors';
 
 class InvalidNoteID {
     message: string
