@@ -6,31 +6,7 @@ import {
     PrismaClientUnknownRequestError,
 } from '@prisma/client/runtime/library';
 import db from '../db';
-
-type PrismaClientError = PrismaClientInitializationError | PrismaClientRustPanicError | PrismaClientValidationError | PrismaClientKnownRequestError | PrismaClientUnknownRequestError | Error
-
-export class NoteNotFoundError extends Error {
-    name: string
-    message: string
-
-    constructor(message: string) {
-        super(message)
-        this.name = 'NoteNotFoundError';
-        this.message = message
-    }
-}
-
-export class DatabaseError {
-    message: string
-    dbError: PrismaClientError
-    constructor(
-        message: string,
-        dbError: PrismaClientError
-    ) {
-        this.message = message;
-        this.dbError = dbError
-    }
-}
+import { NoteNotFoundError, DatabaseError } from '../errors/DatabaseErrors';
 
 export async function getOneNote(ownerId: number, noteId: number) {
     try {
