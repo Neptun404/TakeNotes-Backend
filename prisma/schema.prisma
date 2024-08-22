@@ -23,6 +23,7 @@ model Note {
   owner      User         @relation(fields: [ownerId], references: [id])
   ownerId    Int
   NoteFolder NoteFolder[]
+  TaggedNote TaggedNote[]
 
   @@fulltext([title])
   @@fulltext([content])
@@ -45,4 +46,19 @@ model NoteFolder {
   folderId Int
 
   @@unique([noteId, folderId]) // Ensure note id and folder id are only associated once
+}
+
+model Tag {
+  name       String       @id
+  TaggedNote TaggedNote[]
+}
+
+model TaggedNote {
+  id      Int    @id
+  tag     Tag    @relation(fields: [tagName], references: [name])
+  tagName String
+  note    Note   @relation(fields: [noteId], references: [id])
+  noteId  Int
+
+  @@unique([tagName, noteId])
 }
