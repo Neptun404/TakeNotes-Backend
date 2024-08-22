@@ -1,9 +1,10 @@
 import { Note } from '@prisma/client';
 import noteController from '../../src/controllers/note.controller';
-import { createNote, deleteNote, getManyNotes, getOneNote, NoteNotFoundError, updateNote } from '../../src/services/note.service';
+import { createNote, deleteNote, getManyNotes, getOneNote, updateNote } from '../../src/services/note.service';
 import { Request, Response, NextFunction } from 'express';
 import { createError } from '../../src/utils/createError';
 import { getMockReq, getMockRes } from '@jest-mock/express'
+import { NoteNotFoundError } from '../../src/errors/DatabaseErrors';
 
 jest.mock('../../src/services/note.service')
 
