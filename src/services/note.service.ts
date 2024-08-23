@@ -98,19 +98,37 @@ export async function deleteNote(ownerId: number, noteId: number) {
     }
 }
 
-export async function updateNote(ownerId: number, noteId: number, note: { title: string, content: string }) {
+export async function updateNote(ownerId: number, noteId: number, note: { title: string, content: string, tags?: string[] }) {
     try {
+        // Create tags if provided
+        let _tags: { name: string }[] | [] = []
+        if (note.tags) {
+            // Wait for tags to be created before proceding
+            await tagService.createTags(note.tags)
+            _tags = note.tags.map(tag => {
+                return { name: tag }
+            })
+        }
+
         // Update user's record in the database
         const updatedNote = await db.note.update({
+            data: {
+                title: note.title,
+                content: note.content,
+                tags: {
+                    set: [],
+                    connect: _tags
+                }
+            },
+            include: {
+                tags: true
+            },
             where: {
                 id: noteId, AND: {
                     ownerId
                 }
-            },
-            data: {
-                ...note
             }
-        })
+        });
 
         return updatedNote;
     } catch (error) {
