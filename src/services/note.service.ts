@@ -16,6 +16,9 @@ export async function getOneNote(ownerId: number, noteId: number) {
                 id: noteId, AND: {
                     ownerId
                 }
+            },
+            include: {
+                tags: true
             }
         })
 
@@ -34,6 +37,9 @@ export async function getManyNotes(ownerId: number) {
         const notes = await db.note.findMany({
             where: {
                 ownerId: ownerId
+            },
+            include: {
+                tags: true
             }
         })
 
