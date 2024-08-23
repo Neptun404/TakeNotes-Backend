@@ -82,6 +82,8 @@ export async function deleteNote(ownerId: number, noteId: number) {
                 id: noteId, AND: {
                     ownerId: ownerId
                 }
+            }, include: {
+                tags: true
             }
         })
 
