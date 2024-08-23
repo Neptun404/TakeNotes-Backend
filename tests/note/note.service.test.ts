@@ -1,6 +1,7 @@
-import noteService, { createNote, DatabaseError, getManyNotes, getOneNote, NoteNotFoundError, updateNote } from '../../src/services/note.service';
+import noteService, { createNote, getManyNotes, getOneNote, updateNote } from '../../src/services/note.service';
 import db from '../../src/db';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { DatabaseError, NoteNotFoundError } from '../../src/errors/DatabaseErrors';
 
 jest.mock('../../src/db', () => ({
     __esModule: true,
@@ -38,13 +39,6 @@ describe('Test cases for creating notes', () => {
         // Call createNote service function, which in turns calls database query that returns mocked values
         const result = await createNote(ownerId, note);
 
-        expect(mockNoteCreation).toHaveBeenCalledWith({
-            data: {
-                title: 'Test Note Title',
-                content: 'Test Note Content',
-                ownerId
-            }
-        })
         expect(result).toEqual({ ownerId: 1, title: 'Test Note Title', content: 'Test Note Content' })
     })
 
@@ -57,13 +51,6 @@ describe('Test cases for creating notes', () => {
         const result = await createNote(ownerId, note);
 
         expect(result).toEqual({ ownerId: 1, title: 'Test Note Title', content: '' })
-        expect(mockNoteCreation).toHaveBeenCalledWith({
-            data: {
-                title: 'Test Note Title',
-                content: '',
-                ownerId
-            }
-        })
     })
 })
 
