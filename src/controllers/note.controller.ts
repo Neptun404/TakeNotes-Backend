@@ -83,7 +83,6 @@ export async function createNote(req: Request, res: Response, next: NextFunction
             // Check that none of the tags are empty
             const tagsMap: { [key: string]: boolean } = {};
             (tags as string[]).forEach((tag) => {
-                console.log(tag);
                 if (!tag || !tag.toString().trim()) throw new InvalidTagsError('Tags cannot be empty');
                 if (tagsMap[tag]) throw new InvalidTagsError('Duplicate tags are not allowed');
                 tagsMap[tag] = true;
@@ -94,7 +93,7 @@ export async function createNote(req: Request, res: Response, next: NextFunction
         if (!title || !content) throw new MissingTitleOrContentError('Title and content are required')
         else if ((title as string).trim() === '') throw new MissingTitleOrContentError('Title cannot be empty')
 
-        const note = await noteServices.createNote(userId, { title, content })
+        const note = await noteServices.createNote(userId, { title, content, tags });
 
         res.status(201).json({
             status: 'success',
