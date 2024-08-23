@@ -13,7 +13,7 @@ jest.mock('../../src/db', () => ({
 
 const mockFindMany = db.note.findMany as jest.Mock;
 
-describe('Search notes by title', () => { 
+describe('Search notes by title', () => {
     it('should return empty array if no notes found', async () => {
         mockFindMany.mockResolvedValue([])
 
@@ -36,4 +36,39 @@ describe('Search notes by title', () => {
 
         expect(a).toEqual(mockedNotes)
     })
- })
+})
+
+
+describe('Search notes by tags', () => {
+    it('should return empty array if no notes found', async () => {
+        mockFindMany.mockResolvedValue([])
+
+        const a = await searchService.searchByTags(1, ['test'])
+        expect(a).toEqual([])
+    });
+
+    it('should return array of notes if notes found', async () => {
+        const mockedNotes = [
+            {
+                id: 1,
+                title: 'Test Note Title',
+                content: 'Test Note Content',
+                ownerId: 1,
+                tags: ['test', 'delish']
+            }
+        ]
+        mockFindMany.mockResolvedValue(mockedNotes)
+
+        const a = await searchService.searchByTags(1, ['test'])
+
+        expect(a).toEqual(mockedNotes)
+    });
+
+    it('should return empty array if no notes found with that tag', async () => {
+        mockFindMany.mockResolvedValue([])
+
+        const a = await searchService.searchByTags(1, ['test'])
+
+        expect(a).toEqual([])
+    })
+})

@@ -17,6 +17,36 @@ export async function searchByTitle(title: string) {
     }
 }
 
+export async function searchByTags(ownerId: number, tags: string[]) {
+    try {
+        return await db.note.findMany({
+            select: {
+                id: true,
+                content: true,
+                title: true,
+                tags: true,
+                ownerId: true
+            },
+            where: {
+                ownerId, AND: {
+                    tags: {
+                        some: {
+                            name: {
+                                in: tags
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+    } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
+        else throw new Error('Internal server error');
+    }
+}
+
 export default {
     searchByTitle,
+    searchByTags
 }
