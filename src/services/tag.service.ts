@@ -19,4 +19,20 @@ export async function createTags(tags: string[]) {
     }
 }
 
-export default { createTags }
+export async function getTags(ownerId: number) {
+    try {
+        return await db.note.findMany({
+            select: {
+                tags: true
+            },
+            where: {
+                id: ownerId
+            }
+        })
+    } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
+        else throw new Error('Internal server error');
+    }
+}
+
+export default { getTags, createTags }
