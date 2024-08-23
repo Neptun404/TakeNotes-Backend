@@ -14,6 +14,6 @@ export async function getTags(req: Request, res: Response, next: NextFunction) {
         })
     } catch (error) {
         if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
-        else return next(createError(500, error))
+        else return next(createError(500, 'Internal Server Error'))
     }
 }
