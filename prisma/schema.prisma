@@ -9,56 +9,27 @@ datasource db {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  username String   @unique
+  id       Int    @id @default(autoincrement())
+  username String @unique
   password String
   notes    Note[]
-  Folder   Folder[]
 }
 
 model Note {
-  id         Int          @id @default(autoincrement())
-  title      String
-  content    String       @db.LongText
-  owner      User         @relation(fields: [ownerId], references: [id])
-  ownerId    Int
-  NoteFolder NoteFolder[]
-  TaggedNote TaggedNote[]
+  id      Int    @id @default(autoincrement())
+  title   String
+  content String @db.LongText
+  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId Int
+  tags    Tag[]
 
   @@fulltext([title])
   @@fulltext([content])
   @@fulltext([title, content])
 }
 
-model Folder {
-  id         Int          @id @default(autoincrement())
-  title      String
-  owner      User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  ownerId    Int
-  NoteFolder NoteFolder[]
-}
-
-model NoteFolder {
-  id       Int    @id
-  note     Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  noteId   Int
-  folder   Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  folderId Int
-
-  @@unique([noteId, folderId]) // Ensure note id and folder id are only associated once
-}
-
 model Tag {
-  name       String       @id
-  TaggedNote TaggedNote[]
-}
-
-model TaggedNote {
-  id      Int    @id
-  tag     Tag    @relation(fields: [tagName], references: [name])
-  tagName String
-  note    Note   @relation(fields: [noteId], references: [id])
-  noteId  Int
-
-  @@unique([tagName, noteId])
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  notes Note[]
 }
