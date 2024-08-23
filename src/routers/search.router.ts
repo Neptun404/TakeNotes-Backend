@@ -1,13 +1,13 @@
 import { Router } from "express";
 import routeErrorHandler from "../errors/route.error.handler";
 import jwtAuth from "../middlewares/auth.jwt";
-import { searchByName, searchByTags } from "../controllers/search.controller";
+import { searchByTitle, searchByTags } from "../controllers/search.controller";
 
 const router = Router()
 
 export default router
     .use(jwtAuth)
-    .get('/name', searchByName)
+    .get('/title', searchByTitle)
     .get('/tags', searchByTags)
     .use(routeErrorHandler)
 
