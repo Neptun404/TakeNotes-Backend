@@ -465,4 +465,24 @@ describe('Check function \'updateNote controller\'', () => {
         expect(res.json).not.toHaveBeenCalled()
         expect(next).toHaveBeenCalledWith(createError(404, 'Note not found'))
     })
+
+    it('should return 400 when tags are empty', async () => {
+        const req = getMockReq({
+            params: { id: '1' }, body: {
+                title: 'Old Title', content: 'Old Content',
+                tags: [
+                    "utag1",
+                    "utag2",
+                    "       ",
+                    "",
+                    "utag3"
+                ]
+            }
+        })
+        const { res, next } = getMockRes({ locals: { userId: 1 } })
+
+        await noteController.updateNote(req, res, next)
+        expect(res.json).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledWith(createError(400, 'Tags cannot be empty'))
+    })
 })
