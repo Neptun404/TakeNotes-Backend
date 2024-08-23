@@ -7,6 +7,7 @@ import {
 } from '@prisma/client/runtime/library';
 import db from '../db';
 import { NoteNotFoundError, DatabaseError } from '../errors/DatabaseErrors';
+import tagService from './tag.service';
 
 export async function getOneNote(ownerId: number, noteId: number) {
     try {
@@ -43,14 +44,27 @@ export async function getManyNotes(ownerId: number) {
     }
 }
 
-export async function createNote(ownerId: number, note: { title: string, content: string }) {
+export async function createNote(ownerId: number, note: { title: string, content: string, tags?: string[] }) {
     try {
+        // Create tags if provided
+        let _tags: { name: string }[] | [] = []
+        if (note.tags) {
+            // Wait for tags to be created before proceding
+            await tagService.createTags(note.tags)
+            _tags = note.tags.map(tag => {
+                return { name: tag }
+            })
+        }
+
         // Create note in database with user id as owner
         const createdNote = await db.note.create({
             data: {
                 title: note.title,
                 content: note.content,
-                ownerId
+                ownerId,
+                tags: {
+                    connect: _tags
+                }
             }
         })
 
