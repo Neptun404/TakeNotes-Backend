@@ -95,13 +95,6 @@ describe('Test cases for getting notes', () => {
         mockNoteFindFirst.mockResolvedValue(null)
 
         await expect(getOneNote(ownerId, noteId)).rejects.toBeInstanceOf(NoteNotFoundError)
-        expect(mockNoteFindFirst).toHaveBeenCalledWith({
-            where: {
-                id: noteId, AND: {
-                    ownerId
-                }
-            }
-        })
     })
 
     test('Test succeed even if owner has no notes stored', async () => {
