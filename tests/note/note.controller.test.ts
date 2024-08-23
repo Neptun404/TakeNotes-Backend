@@ -1,5 +1,5 @@
 import { Note } from '@prisma/client';
-import noteController from '../../src/controllers/note.controller';
+import noteController, { InvalidTagsError } from '../../src/controllers/note.controller';
 import { createNote, deleteNote, getManyNotes, getOneNote, updateNote } from '../../src/services/note.service';
 import { Request, Response, NextFunction } from 'express';
 import { createError } from '../../src/utils/createError';
@@ -128,6 +128,168 @@ describe('Test cases for note creation', () => {
         };
 
         next = jest.fn();
+    })
+
+    it('Should succeed if no tags are provided', async () => {
+        req.body = { title: 'Test Note Title', content: 'Test Note Content' }
+
+        mockCreateNote.mockResolvedValue({
+            id: 1,
+            ownerId: 1,
+            content: 'Test Note Content',
+            title: 'Test Note Title',
+            tags: []
+        })
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(res.json).toHaveBeenCalledWith({
+            status: 'success',
+            message: 'Note created',
+            data: {
+                id: 1,
+                ownerId: 1,
+                content: 'Test Note Content',
+                title: 'Test Note Title',
+                tags: []
+            }
+        })
+        expect(next).not.toHaveBeenCalled()
+    })
+
+    it('should succeed if tags are provided', async () => {
+        req.body = {
+            title: 'Test Note Title',
+            content: 'Test Note Content',
+            tags: ['tag1', 'tag2']
+        }
+
+        const mockedResolve = {
+            id: 1,
+            ownerId: 1,
+            content: 'Test Note Content',
+            title: 'Test Note Title',
+            tags: ['tag1', 'tag2']
+        }
+        mockCreateNote.mockResolvedValue(mockedResolve)
+
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(next).not.toHaveBeenCalled()
+        expect(res.json).toHaveBeenCalledWith({
+            status: 'success',
+            message: 'Note created',
+            data: {
+                ...mockedResolve
+            }
+        })
+    })
+
+    it('should succeed if tags array contains non-string values', async () => {
+        req.body = {
+            title: 'Test Note Title',
+            content: 'Test Note Content',
+            tags: ['tag1', 1234]
+        }
+
+        const mockedNote = {
+            id: 1,
+            ownerId: 1,
+            content: 'Test Note Content',
+            title: 'Test Note Title',
+            tags: ['tag1', 1234]
+        }
+        mockCreateNote.mockResolvedValue(mockedNote)
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(next).not.toHaveBeenCalled()
+        expect(res.json).toHaveBeenCalledWith({
+            status: 'success',
+            message: 'Note created',
+            data: {
+                ...mockedNote
+            }
+        })
+    })
+
+    it('should fail if note has more than 20 tags', async () => {
+        req.body = {
+            title: 'Test Note Title',
+            content: 'Test Note Content',
+            tags: Array(21).fill('tag1')
+        }
+
+        mockCreateNote.mockRejectedValue(new InvalidTagsError('Note can have at most 20 tags'))
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(res.json).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledWith(createError(400, 'Note can have at most 20 tags'))
+    })
+
+    it('should fail if note has duplicate tags', async () => {
+        req.body = {
+            title: 'Test Note Title',
+            content: 'Test Note Content',
+            tags: ['tag1', 'tag2', 'tag1']
+        }
+
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(res.json).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledWith(createError(400, 'Duplicate tags are not allowed'))
+    })
+
+    it('should fail if tags are not in an array format', async () => {
+        req.body = {
+            title: 'Test Note Title',
+            content: 'Test Note Content',
+            tags: 'invalid-format'
+        }
+
+        mockCreateNote.mockRejectedValue(new InvalidTagsError('Tags must be in an array format'))
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(res.json).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledWith(createError(400, 'Tags must be in an array format'))
+    })
+
+    it('should fail if tags are empty', async () => {
+        req.body = {
+            title: 'Test Note Title',
+            content: 'Test Note Content',
+            tags: ['tag1', '', 'tag2']
+        }
+
+        mockCreateNote.mockRejectedValue(new InvalidTagsError('Tags cannot be empty'))
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(res.json).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledWith(createError(400, 'Tags cannot be empty'))
+    })
+
+    it('should succeed if tags contain special characters', async () => {
+        req.body = {
+            title: 'Test Note Title',
+            content: 'Test Note Content',
+            tags: ['tag1', '@f&yp', '眠-い']
+        }
+
+        const mockedNote = {
+            id: 1,
+            ownerId: 1,
+            content: 'Test Note Content',
+            title: 'Test Note Title',
+            tags: ['tag1', '@f&yp', '眠-い']
+        }
+        mockCreateNote.mockResolvedValue(mockedNote)
+        await noteController.createNote(req as Request, res as Response, next)
+
+        expect(res.json).toHaveBeenCalledWith({
+            status: 'success',
+            message: 'Note created',
+            data: {
+                ...mockedNote
+            }
+        })
     })
 
     it('Note creation should be successful', async () => {

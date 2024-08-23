@@ -61,11 +61,35 @@ class MissingTitleOrContentError extends Error {
     }
 }
 
+export class InvalidTagsError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'InvalidTagsError';
+        this.message = message;
+    }
+}
+
 export async function createNote(req: Request, res: Response, next: NextFunction) {
     const { userId } = res.locals as { userId: number };
-    const { title, content } = req.body
+    const { title, content, tags } = req.body // Get title, content and tags from request body
 
     try {
+        // Validate tags
+        if (tags) {
+            if (!Array.isArray(tags))
+                throw new InvalidTagsError('Tags must be in an array format');
+            else if (tags.length > 20) throw new InvalidTagsError('Note can have at most 20 tags');
+
+            // Check that none of the tags are empty
+            const tagsMap: { [key: string]: boolean } = {};
+            (tags as string[]).forEach((tag) => {
+                console.log(tag);
+                if (!tag || !tag.toString().trim()) throw new InvalidTagsError('Tags cannot be empty');
+                if (tagsMap[tag]) throw new InvalidTagsError('Duplicate tags are not allowed');
+                tagsMap[tag] = true;
+            })
+        }
+
         // Throw error if title is missing or empty
         if (!title || !content) throw new MissingTitleOrContentError('Title and content are required')
         else if ((title as string).trim() === '') throw new MissingTitleOrContentError('Title cannot be empty')
@@ -78,7 +102,8 @@ export async function createNote(req: Request, res: Response, next: NextFunction
             data: note
         })
     } catch (error) {
-        if (error instanceof MissingTitleOrContentError) return next(createError(400, error.message))
+        if (error instanceof InvalidTagsError) return next(createError(400, error.message))
+        else if (error instanceof MissingTitleOrContentError) return next(createError(400, error.message))
         else if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
         else return next(createError(500, 'Internal server error'))
     }
