@@ -69,25 +69,30 @@ export class InvalidTagsError extends Error {
     }
 }
 
+function validateTags(tags: string[]) {
+    // Validate tags
+    if (tags) {
+        if (!Array.isArray(tags))
+            throw new InvalidTagsError('Tags must be in an array format');
+        else if (tags.length > 20) throw new InvalidTagsError('Note can have at most 20 tags');
+
+        // Check that none of the tags are empty
+        const tagsMap: { [key: string]: boolean } = {};
+        (tags as string[]).forEach((tag) => {
+            if (tag.toString().trim() === '') throw new InvalidTagsError('Tags cannot be empty');
+            if (tagsMap[tag]) throw new InvalidTagsError('Duplicate tags are not allowed');
+            tagsMap[tag] = true;
+        })
+    }
+}
+
 export async function createNote(req: Request, res: Response, next: NextFunction) {
     const { userId } = res.locals as { userId: number };
     const { title, content, tags } = req.body // Get title, content and tags from request body
 
     try {
         // Validate tags
-        if (tags) {
-            if (!Array.isArray(tags))
-                throw new InvalidTagsError('Tags must be in an array format');
-            else if (tags.length > 20) throw new InvalidTagsError('Note can have at most 20 tags');
-
-            // Check that none of the tags are empty
-            const tagsMap: { [key: string]: boolean } = {};
-            (tags as string[]).forEach((tag) => {
-                if (!tag || !tag.toString().trim()) throw new InvalidTagsError('Tags cannot be empty');
-                if (tagsMap[tag]) throw new InvalidTagsError('Duplicate tags are not allowed');
-                tagsMap[tag] = true;
-            })
-        }
+        validateTags(tags);
 
         // Throw error if title is missing or empty
         if (!title || !content) throw new MissingTitleOrContentError('Title and content are required')
@@ -134,16 +139,17 @@ export async function deleteNote(req: Request, res: Response, next: NextFunction
 export async function updateNote(req: Request, res: Response, next: NextFunction) {
     const { userId } = res.locals as { userId: number };
     const { id } = req.params;
-    const { title, content } = req.body
+    const { title, content, tags } = req.body
 
     try {
+        validateTags(tags)
         const noteId = validateNoteID(id)
 
         // Check if title and content are not empty
         if (!title || !content) throw new MissingTitleOrContentError('Title and content are required')
         else if ((title as string).trim() === '') throw new MissingTitleOrContentError('Title cannot be empty')
 
-        const updatedNote = await noteServices.updateNote(userId, noteId, { title, content })
+        const updatedNote = await noteServices.updateNote(userId, noteId, { title, content, tags })
 
         // Send response with success message and resource
         res.status(200).json({
@@ -152,7 +158,8 @@ export async function updateNote(req: Request, res: Response, next: NextFunction
             "data": updatedNote
         })
     } catch (error) {
-        if (error instanceof MissingTitleOrContentError) return next(createError(400, error.message))
+        if (error instanceof InvalidTagsError) return next(createError(400, error.message))
+        else if (error instanceof MissingTitleOrContentError) return next(createError(400, error.message))
         else if (error instanceof InvalidNoteID) return next(createError(400, `${id} is an invalid note id`))
         else if (error instanceof NoteNotFoundError) return next(createError(404, 'Note not found'))
         else if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
