@@ -2,10 +2,11 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import db from '../db';
 import { DatabaseError } from '../errors/DatabaseErrors';
 
-export async function searchByTitle(title: string) {
+export async function searchByTitle(ownerId: number, title: string) {
     try {
         return await db.note.findMany({
             where: {
+                ownerId,
                 title: {
                     search: title
                 }

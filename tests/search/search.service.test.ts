@@ -17,7 +17,7 @@ describe('Search notes by title', () => {
     it('should return empty array if no notes found', async () => {
         mockFindMany.mockResolvedValue([])
 
-        const a = await searchService.searchByTitle('test')
+        const a = await searchService.searchByTitle(1, 'test')
         expect(a).toEqual([])
     })
 
@@ -32,7 +32,7 @@ describe('Search notes by title', () => {
         ]
         mockFindMany.mockResolvedValue(mockedNotes)
 
-        const a = await searchService.searchByTitle('test')
+        const a = await searchService.searchByTitle(1, 'test')
 
         expect(a).toEqual(mockedNotes)
     })

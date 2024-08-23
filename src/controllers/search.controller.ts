@@ -10,6 +10,7 @@ class InvalidSearchTermError extends Error {
 }
 export async function searchByTitle(req: Request, res: Response, next: NextFunction) {
     try {
+        const { ownerId } = res.locals
         const { searchTerm } = req.query
         if (!searchTerm) throw new InvalidSearchTermError('Search term is required')
         else if (typeof searchTerm !== 'string' || searchTerm.trim() === '') throw new InvalidSearchTermError('Search term must be a non-empty string')
@@ -17,7 +18,7 @@ export async function searchByTitle(req: Request, res: Response, next: NextFunct
         res.status(200).json({
             staus: 'success',
             message: 'Search successful',
-            data: await searchService.searchByTitle(searchTerm)
+            data: await searchService.searchByTitle(ownerId, searchTerm)
         })
     } catch (error) {
         if (error instanceof Error) return next(createError(400, error.message))
