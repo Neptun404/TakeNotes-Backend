@@ -3,6 +3,7 @@ import userRouter from "./user.router";
 import noteRouter from "./note.router";
 import folderRouter from "./folder.router";
 import tagRouter from "./tag.router";
+import searchRouter from "./search.router";
 
 const router = Router()
 
@@ -11,3 +12,4 @@ export default router
     .use('/note', noteRouter)
     .use('/folders', folderRouter)
     .use('/tags', tagRouter)
+    .use('/search', searchRouter)
