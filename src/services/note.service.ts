@@ -71,6 +71,9 @@ export async function createNote(ownerId: number, note: { title: string, content
                 tags: {
                     connect: _tags
                 }
+            },
+            include: {
+                tags: true
             }
         })
 
