@@ -4,7 +4,7 @@ import { DatabaseError, FolderNotFoundError, NoteNotFoundError } from "../errors
 
 export async function getFolder(id: number, ownerId: number) {
     try {
-        const folder = await db.folder.findUnique({
+        const folder = await db.folder.findFirst({
             where: { id, AND: { ownerId } },
             include: {
                 notes: {
@@ -21,7 +21,7 @@ export async function getFolder(id: number, ownerId: number) {
         }
         return folder;
     } catch (error) {
-        if (error instanceof FolderNotFoundError) throw error;
+        if (error instanceof FolderNotFoundError) throw new FolderNotFoundError(error.message);
         else if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
         else throw new Error(`[getFolder] Database Error : ${(error as Error).message}`);
     }
