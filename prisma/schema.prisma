@@ -13,6 +13,7 @@ model User {
   username String @unique
   password String
   notes    Note[]
+  Folder Folder[]
 }
 
 model Note {
@@ -22,6 +23,7 @@ model Note {
   owner   User   @relation(fields: [ownerId], references: [id])
   ownerId Int
   tags    Tag[]
+  Folders Folder[]
 
   @@fulltext([title])
   @@fulltext([content])
@@ -32,4 +34,14 @@ model Tag {
   id    Int    @id @default(autoincrement())
   name  String @unique
   notes Note[]
+  Folders Folder[]
+}
+
+model Folder {
+  id Int @id @default(autoincrement())
+  name String
+  owner User @relation(fields: [ownerId], references: [id])
+  ownerId Int
+  notes Note[]
+  tags Tag[]
 }
