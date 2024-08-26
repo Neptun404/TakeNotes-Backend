@@ -1,6 +1,6 @@
 import db from "../db";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { DatabaseError, FolderNotFoundError } from "../errors/DatabaseErrors";
+import { DatabaseError, FolderNotFoundError, NoteNotFoundError } from "../errors/DatabaseErrors";
 
 export async function getFolder(id: number, ownerId: number) {
     try {
@@ -23,7 +23,7 @@ export async function getFolder(id: number, ownerId: number) {
     } catch (error) {
         if (error instanceof FolderNotFoundError) throw error;
         else if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
-        else throw new Error(`Failed to get folder: ${error.message}`);
+        else throw new Error(`[getFolder] Database Error : ${(error as Error).message}`);
     }
 }
 
@@ -38,7 +38,7 @@ export async function getFolders(ownerId: number) {
         })
     } catch (error) {
         if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
-        else throw new Error(`Failed to get folders: ${error.message}`);
+        else throw new Error(`[getFolders] Database error: ${(error as Error).message}`);
     }
 }
 
@@ -55,8 +55,12 @@ export async function createFolder(ownerId: number, folder: { title: string, not
             }
         })
     } catch (error) {
-        if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
-        else throw new Error(`Failed to create folder: ${error.message}`);
+        if (error instanceof PrismaClientKnownRequestError) {
+            if (error.code === 'P2025') // P2025 means record not found
+                throw new NoteNotFoundError(`Some or all note ids : [${folder.notes?.map(note => note.id).toString()}] does not exists`);
+            else throw new DatabaseError(error.message, error);
+        }
+        else throw new Error(`[createFolder] Database error: ${(error as Error).message}`);
     }
 
 }
@@ -81,7 +85,7 @@ export async function updateFolder(ownerId: number, id: number, folder: {
             if (error.code === 'P2025') // P2025 means record not found
                 throw new FolderNotFoundError(`Folder not found with id ${id}`)
             else throw new DatabaseError('Database error occured during note update', error)
-        else throw new Error('Internal server error')
+        else throw new Error(`[updateFolder] Database Error : ${(error as Error).message}`);
     }
 }
 
