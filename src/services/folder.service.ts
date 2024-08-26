@@ -22,8 +22,23 @@ export async function getFolders(ownerId: number) {
     throw new Error("Not implemented");
 }
 
-export async function createFolder(folder: { title: string, ownerId: number }) {
-    throw new Error("Not implemented");
+export async function createFolder(ownerId: number, folder: { title: string, notes?: { id: number }[] }) {
+    try {
+        // Create a new folder record
+        return await db.folder.create({
+            data: {
+                name: folder.title,
+                ownerId: ownerId,
+                notes: {
+                    connect: folder.notes ? folder.notes : [], // Connect the folder to the notes if provided
+                }
+            }
+        })
+    } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
+        else throw new Error(`Failed to create folder: ${error.message}`);
+    }
+
 }
 
 export async function updateFolder(id: number, folder: { title: string, ownerId: number }) {
