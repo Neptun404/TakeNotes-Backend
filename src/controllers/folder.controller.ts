@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express"
 import folderService from "../services/folder.service";
 import { InvalidNoteID, validateNoteID } from "./note.controller";
-import { DatabaseError, NoteNotFoundError } from "../errors/DatabaseErrors";
+import { DatabaseError, FolderNotFoundError, NoteNotFoundError } from "../errors/DatabaseErrors";
 import createError from "../utils/createError";
 
 class ValidationError extends Error {
@@ -12,9 +12,31 @@ class ValidationError extends Error {
     }
 }
 
+function validateFolderId(id: any): number {
+    if (!Number.isInteger(parseInt(id))) throw new ValidationError(id)
+    else return parseInt(id)
+}
+
 async function getFolder(req: Request, res: Response, next: NextFunction) {
 
-    throw new Error('Endpoint not implemented')
+    try {
+        // Validate folder id
+        const { id } = req.params
+        if (!id) throw new ValidationError('Invalid folder id')
+
+        const { userId } = res.locals;
+        const folder = await folderService.getFolder(validateFolderId(id), userId);
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Folder retrieved successfully',
+            data: folder
+        })
+    } catch (error) {
+        if (error instanceof FolderNotFoundError) return next(createError(400, `Folder with id ${req.params.id} not found`))
+        if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
+        else return next(createError(500, 'Internal server error'))
+    }
 }
 
 async function getFolders(req: Request, res: Response, next: NextFunction) {
