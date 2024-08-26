@@ -13,8 +13,7 @@ export async function getFolder(id: number, ownerId: number) {
                         id: true,
                         tags: true
                     }
-                },
-                tags: true
+                }
             }
         });
         if (!folder) {
