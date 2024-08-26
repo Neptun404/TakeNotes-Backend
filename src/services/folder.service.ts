@@ -6,6 +6,16 @@ export async function getFolder(id: number, ownerId: number) {
     try {
         const folder = await db.folder.findUnique({
             where: { id, AND: { ownerId } },
+            include: {
+                notes: {
+                    select: {
+                        title: true,
+                        id: true,
+                        tags: true
+                    }
+                },
+                tags: true
+            }
         });
         if (!folder) {
             throw new FolderNotFoundError(`Folder with id ${id} not found`);
