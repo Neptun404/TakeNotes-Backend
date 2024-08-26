@@ -4,14 +4,14 @@ import noteServices, { getManyNotes, getOneNote } from '../services/note.service
 import { createError } from '../utils/createError';
 import { DatabaseError, NoteNotFoundError } from '../errors/DatabaseErrors';
 
-class InvalidNoteID {
+export class InvalidNoteID {
     message: string
     constructor(message: string) {
         this.message = message;
     }
 }
 
-function validateNoteID(id: any): number {
+export function validateNoteID(id: any): number {
     // Throws an InvalidNoteID error if id is not a number
     if (!Number.isInteger(parseInt(id))) throw new InvalidNoteID(id)
     else return parseInt(id)
