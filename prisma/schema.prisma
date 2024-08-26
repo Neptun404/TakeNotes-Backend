@@ -9,18 +9,18 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  username String @unique
+  id       Int      @id @default(autoincrement())
+  username String   @unique
   password String
   notes    Note[]
-  Folder Folder[]
+  Folder   Folder[]
 }
 
 model Note {
-  id      Int    @id @default(autoincrement())
+  id      Int      @id @default(autoincrement())
   title   String
-  content String @db.LongText
-  owner   User   @relation(fields: [ownerId], references: [id])
+  content String   @db.LongText
+  owner   User     @relation(fields: [ownerId], references: [id])
   ownerId Int
   tags    Tag[]
   Folders Folder[]
@@ -34,14 +34,12 @@ model Tag {
   id    Int    @id @default(autoincrement())
   name  String @unique
   notes Note[]
-  Folders Folder[]
 }
 
 model Folder {
-  id Int @id @default(autoincrement())
-  name String
-  owner User @relation(fields: [ownerId], references: [id])
+  id      Int    @id @default(autoincrement())
+  name    String
+  owner   User   @relation(fields: [ownerId], references: [id])
   ownerId Int
-  notes Note[]
-  tags Tag[]
+  notes   Note[]
 }
