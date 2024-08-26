@@ -95,11 +95,54 @@ async function createFolder(req: Request, res: Response, next: NextFunction) {
 }
 
 async function updateFolder(req: Request, res: Response, next: NextFunction) {
-    throw new Error('Endpoint not implemented')
+    try {
+        const { id } = req.params
+
+        const { title, notes } = req.body
+        if (!title || (title as string).trim() === '')
+            throw new ValidationError(`Invalid folder title ${title}`);
+
+        const noteIds: { id: number }[] = notes?.map((noteId: any) => {
+            return { id: validateNoteID(noteId) }
+        })
+
+        const { userId } = res.locals;
+        const updatedFolder = await folderService.updateFolder(userId, validateFolderId(id), {
+            title: title,
+            notes: noteIds
+        })
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Folder updated successfully',
+            data: updatedFolder
+        })
+    } catch (error) {
+        if (error instanceof ValidationError) return next(createError(400, error.message))
+        else if (error instanceof InvalidNoteID) return next(createError(400, `Invalid note id : ${error.message}`))
+        else if (error instanceof FolderNotFoundError) return next(createError(400, error.message))
+        else if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
+        else return next(createError(500, 'Internal server error'))
+    }
 }
 
 async function deleteFolder(req: Request, res: Response, next: NextFunction) {
-    throw new Error('Endpoint not implemented')
+    try {
+        const { id } = req.params;
+        const folderId = validateFolderId(id)
+
+        const { userId } = res.locals;
+        await folderService.deleteFolder(userId, folderId);
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Folder deleted successfully'
+        })
+    } catch (error) {
+        if (error instanceof FolderNotFoundError) return next(createError(400, `Folder width id ${req.params.id} not found`))
+        else if (error instanceof DatabaseError) return next(createError(500, 'Database error'))
+        else return next(createError(500, 'Internal server error'))
+    }
 }
 
 export default {
