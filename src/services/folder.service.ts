@@ -76,14 +76,24 @@ export async function updateFolder(ownerId: number, id: number, folder: {
             data: {
                 name: folder.title,
                 notes: {
+                    set: [],
                     connect: folder.notes ? folder.notes : [],
                 }
             },
+            include: {
+                notes: {
+                    select: {
+                        id: true,
+                        title: true,
+                        tags: true
+                    }
+                }
+            }
         })
     } catch (error) {
         if (error instanceof PrismaClientKnownRequestError)
             if (error.code === 'P2025') // P2025 means record not found
-                throw new FolderNotFoundError(`Folder not found with id ${id}`)
+                throw new FolderNotFoundError(`Folder ${id} not found or note not found with id [${folder.notes?.map(note => note.id).toString()}]`)
             else throw new DatabaseError('Database error occured during note update', error)
         else throw new Error(`[updateFolder] Database Error : ${(error as Error).message}`);
     }
