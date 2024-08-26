@@ -28,7 +28,18 @@ export async function getFolder(id: number, ownerId: number) {
 }
 
 export async function getFolders(ownerId: number) {
-    throw new Error("Not implemented");
+    try {
+        return await db.folder.findMany({
+            where: { ownerId },
+            select: {
+                name: true,
+                id: true
+            }
+        })
+    } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) throw new DatabaseError(error.message, error);
+        else throw new Error(`Failed to get folders: ${error.message}`);
+    }
 }
 
 export async function createFolder(ownerId: number, folder: { title: string, notes?: { id: number }[] }) {
