@@ -61,12 +61,47 @@ export async function createFolder(ownerId: number, folder: { title: string, not
 
 }
 
-export async function updateFolder(id: number, folder: { title: string, ownerId: number }) {
-    throw new Error("Not implemented");
+// Test that connecting a uncreated note to folder effects
+export async function updateFolder(ownerId: number, id: number, folder: {
+    title: string,
+    notes?: { id: number }[]
+}) {
+    try {
+        return await db.folder.update({
+            where: { id, AND: { ownerId } },
+            data: {
+                name: folder.title,
+                notes: {
+                    connect: folder.notes ? folder.notes : [],
+                }
+            },
+        })
+    } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError)
+            if (error.code === 'P2025') // P2025 means record not found
+                throw new FolderNotFoundError(`Folder not found with id ${id}`)
+            else throw new DatabaseError('Database error occured during note update', error)
+        else throw new Error('Internal server error')
+    }
 }
 
-export async function deleteFolder(id: number) {
-    throw new Error("Not implemented");
+export async function deleteFolder(ownerId: number, id: number) {
+    try {
+        return await db.folder.delete({
+            where: {
+                id, AND: {
+                    ownerId
+                }
+            }
+        })
+    } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) {
+            if (error.code === 'P2025') // P2025 means record not found
+                throw new FolderNotFoundError(`Folder not found with id ${id}`)
+            throw new DatabaseError(error.message, error)
+        }
+        else throw new Error('Internal server error');
+    }
 }
 
 export default {
