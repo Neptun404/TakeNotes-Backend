@@ -18,7 +18,20 @@ async function getFolder(req: Request, res: Response, next: NextFunction) {
 }
 
 async function getFolders(req: Request, res: Response, next: NextFunction) {
-    throw new Error('Endpoint not implemented')
+    try {
+        const { userId } = res.locals;
+
+        const folders = await folderService.getFolders(userId);
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Folders retrieved successfully',
+            data: folders
+        })
+    } catch (error) {
+        if (error instanceof DatabaseError) return next(createError(500, `Database error`))
+        else return next(createError(500, `Internal server error`))
+    }
 }
 
 async function createFolder(req: Request, res: Response, next: NextFunction) {
